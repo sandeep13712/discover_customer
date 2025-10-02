@@ -2,185 +2,122 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Set the page configuration for a wider layout
+# Function to generate dummy data and save it to CSV files
+def generate_dummy_data():
+    # Owner Data
+    df_owner = pd.DataFrame({
+        'owner_id': range(1, 101),
+        'age_bracket': np.random.choice(['18-24', '25-34', '35-44', '45-54', '55+'], size=100),
+        'has_kids': np.random.choice([True, False], size=100),
+        'family_status': np.random.choice(['Single', 'Married', 'Divorced', 'Widowed'], size=100)
+    })
+    df_owner.to_csv("owner.csv", index=False)
+
+    # House Data
+    df_house = pd.DataFrame({
+        'house_id': range(1, 101),
+        'owner_id': np.random.randint(1, 101, size=100),
+        'neighborhood_demographics': np.random.choice(['Urban', 'Suburban', 'Rural'], size=100),
+        'house_age_bracket': np.random.choice(['0-10 years', '11-20 years', '21+ years'], size=100),
+        'house_size_sqft': np.random.randint(500, 5000, size=100)
+    })
+    df_house.to_csv("house.csv", index=False)
+
+    # Advertisement Ratings Data
+    df_ad_ratings = pd.DataFrame({
+        'ad_id': np.random.randint(1, 21, size=200),
+        'visit_id': np.random.randint(1, 101, size=200),
+        'rating': np.random.randint(1, 6, size=200)
+    })
+    df_ad_ratings.to_csv("ad_ratings.csv", index=False)
+
+    # Service Visit Data
+    df_service_visit = pd.DataFrame({
+        'visit_id': range(1, 101),
+        'house_id': np.random.randint(1, 101, size=100)
+    })
+    df_service_visit.to_csv("service_visit.csv", index=False)
+
+    # Advertisement Data
+    df_advertisement = pd.DataFrame({
+        "ad_id": range(1, 21),
+        "category": np.random.choice(["Food", "Electronics"], size=20),
+        "ad_offer_value_prop": np.random.choice(["cost_savings", "convenience", "premium_quality"], size=20),
+        "ad_offer_tone": np.random.choice(["casual", "formal", "humorous"], size=20)
+    })
+    df_advertisement.to_csv("advertisement.csv", index=False)
+
+# Generate dummy data if not already present
+generate_dummy_data()
+
+# Streamlit app code starts here
+
 st.set_page_config(layout="wide")
 
-# --- 1. Load and Cache the data ---
 @st.cache_data
 def load_data():
     """Loads all CSV files and returns them as a dictionary of dataframes."""
-    try:
-        df_owner = pd.read_csv("owner.csv")
-        df_house = pd.read_csv("house.csv")
-        df_ad_ratings = pd.read_csv("ad_ratings.csv")
-        df_service_visit = pd.read_csv("service_visit.csv")
-        df_advertisement = pd.read_csv("advertisement.csv")
-        return {
-            "owner": df_owner,
-            "house": df_house,
-            "ad_ratings": df_ad_ratings,
-            "service_visit": df_service_visit,
-            "advertisement": df_advertisement,
-        }
-    except FileNotFoundError:
-        st.error("Please run the data generation script first to create the CSV files.")
-        return None
+    
+     try:
+         df_owner = pd.read_csv("owner.csv")
+         df_house = pd.read_csv("house.csv")
+         df_ad_ratings = pd.read_csv("ad_ratings.csv")
+         df_service_visit = pd.read_csv("service_visit.csv")
+         df_advertisement = pd.read_csv("advertisement.csv")
+         return {
+             "owner": df_owner,
+             "house": df_house,
+             "ad_ratings": df_ad_ratings,
+             "service_visit": df_service_visit,
+             "advertisement": df_advertisement,
+         }
+     except FileNotFoundError:
+         st.error("Please run the data generation script first to create the CSV files.")
+         return None
 
 data = load_data()
 if data is None:
-    st.stop()
+   st.stop()
 
-# Assign dataframes for easier access
 df_owner = data["owner"]
 df_house = data["house"]
 df_ad_ratings = data["ad_ratings"]
 df_service_visit = data["service_visit"]
 df_advertisement = data["advertisement"]
 
-# --- 2. Build the app layout ---
-st.title("Market Size Estimator for New Businesses")
-st.write("Use the dropdowns below to define the new business's target profile and estimate their potential customer base in our network.")
+st.title("Market Size Estimator")
+st.write(
+   "Use the dropdowns below to define the new business's target profile and estimate their potential customer base in our network."
+)
 st.markdown("---")
 
-# Use columns for a better layout
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.header("Business Profile")
-    # Question 1: What type of business is it?
-    ad_category = st.selectbox(
-        "1. What is the business's main category?",
-        options=['Any'] + list(df_advertisement['category'].unique()),
-        help="Select the category that best fits the business's offering."
-    )
+   st.header("Business Profile")
+   ad_category = st.selectbox(
+       "1. What is the business's main category?",
+       options=["Any"] + list(df_advertisement['category'].unique())
+   )
 
-    # Question 2: Who is your ideal customer? (Inferred target attributes)
-    ad_offer_value_prop = st.multiselect(
-        "2. What value proposition does the business offer?",
-        options=list(df_advertisement['ad_offer_value_prop'].unique()),
-        default=[],
-        help="Select any that apply. E.g., 'cost_savings', 'convenience'."
-    )
-    
-    # Question 3: Ad Tone
-    ad_headline_tone = st.multiselect(
-        "3. What is the ad's intended tone?",
-        options=list(df_advertisement['ad_headline_tone'].unique()),
-        default=[],
-        help="Select the tone that fits the ad content."
-    )
+   ad_offer_value_prop = st.multiselect(
+       "2. What value proposition does the business offer?",
+       options=list(df_advertisement['ad_offer_value_prop'].unique())
+   )
+   
+   ad_tone = st.multiselect(
+       "3. Ad Tone",
+       options=list(df_advertisement['ad_offer_tone'].unique())
+   )
 
 with col2:
-    st.header("Target Customer Demographics")
-    # Age Bracket
-    age_bracket = st.multiselect(
-        "4. Which age bracket is the target customer?",
-        options=list(df_owner['age_bracket'].unique()),
-        default=[],
-        help="Select the target age group for the business."
-    )
+   st.header("Target Customer Demographics")
+   age_bracket = st.multiselect(
+       "4. Which age bracket is the target customer?",
+       options=list(df_owner['age_bracket'].unique())
+   )
 
-    # Has Kids
-    has_kids = st.selectbox(
-        "5. Are the target customers families with kids?",
-        options=['Any', 'Yes', 'No'],
-        help="Filter for households with or without children."
-    )
-
-    # Family Status
-    family_status = st.multiselect(
-        "6. What is the target family status?",
-        options=list(df_owner['family_status'].unique()),
-        default=[],
-        help="Filter by family composition."
-    )
-
-with col3:
-    st.header("Target Home & Location")
-    # Neighborhood Demographics
-    neighborhood_demographics = st.multiselect(
-        "7. Which neighborhood type is the target?",
-        options=list(df_house['neighborhood_demographics'].unique()),
-        default=[],
-        help="Filter by general neighborhood type."
-    )
-    
-    # House Age Bracket
-    house_age_bracket = st.multiselect(
-        "8. What is the age bracket of the target homes?",
-        options=list(df_house['house_age_bracket'].unique()),
-        default=[],
-        help="Filter by the age of the houses."
-    )
-
-    # House Size
-    min_sqft, max_sqft = int(df_house['house_size_sqft'].min()), int(df_house['house_size_sqft'].max())
-    house_size_sqft = st.slider(
-        "9. What is the size range of the target homes (sqft)?",
-        min_value=min_sqft, max_value=max_sqft, value=(min_sqft, max_sqft)
-    )
-
-st.markdown("---")
-
-# --- 3. Calculation and display logic ---
-if st.button("Calculate Market Size"):
-    st.subheader("Results")
-    
-    # Start with all owners and progressively filter
-    filtered_owners = df_owner.copy()
-    
-    # Filter owners based on demographic criteria
-    if age_bracket:
-        filtered_owners = filtered_owners[filtered_owners['age_bracket'].isin(age_bracket)]
-    if has_kids == 'Yes':
-        filtered_owners = filtered_owners[filtered_owners['has_kids'] == True]
-    elif has_kids == 'No':
-        filtered_owners = filtered_owners[filtered_owners['has_kids'] == False]
-    if family_status:
-        filtered_owners = filtered_owners[filtered_owners['family_status'].isin(family_status)]
-    
-    # Filter houses based on property criteria
-    filtered_houses = df_house[
-        (df_house['house_size_sqft'] >= house_size_sqft[0]) & 
-        (df_house['house_size_sqft'] <= house_size_sqft[1])
-    ]
-    if neighborhood_demographics:
-        filtered_houses = filtered_houses[filtered_houses['neighborhood_demographics'].isin(neighborhood_demographics)]
-    if house_age_bracket:
-        filtered_houses = filtered_houses[filtered_houses['house_age_bracket'].isin(house_age_bracket)]
-
-    # Get the owners who live in the filtered houses
-    owners_in_filtered_houses = filtered_houses['owner_id'].unique()
-    filtered_owners = filtered_owners[filtered_owners['owner_id'].isin(owners_in_filtered_houses)]
-    
-    # Filter for owners who showed positive engagement with similar ad content
-    positive_ratings_owners = set()
-    if ad_category != 'Any':
-        # Find ads with matching category
-        matching_ads = df_advertisement[df_advertisement['category'] == ad_category]['ad_id']
-        # Find ratings for these ads
-        relevant_ratings = df_ad_ratings[df_ad_ratings['ad_id'].isin(matching_ads)]
-        # Filter for positive ratings (4 or 5 stars)
-        positive_ratings = relevant_ratings[relevant_ratings['rating'] >= 4]
-        
-        # Get the owners who made these positive ratings
-        relevant_visits = df_service_visit[df_service_visit['visit_id'].isin(positive_ratings['visit_id'])]
-        owners_from_positive_ratings = df_house[df_house['house_id'].isin(relevant_visits['house_id'])]['owner_id']
-        positive_ratings_owners.update(owners_from_positive_ratings.unique())
-    
-    # If a category was selected, further filter the owners to only include those who have previously engaged positively
-    if ad_category != 'Any':
-        filtered_owners = filtered_owners[filtered_owners['owner_id'].isin(positive_ratings_owners)]
-
-    # Final count
-    market_size = filtered_owners['owner_id'].nunique()
-    
-    if market_size > 0:
-        st.success(f"**Potential Customer Base Size: {market_size} homeowners**")
-    else:
-        st.warning("No customers matched your criteria. Try broadening your selection.")
-        
-    st.info(f"Based on the analysis of {df_owner['owner_id'].nunique()} homeowners in our database.")
-    
-    st.markdown("---")
-    st.caption("Disclaimer: This is an estimation based on historical data and selected criteria.")
+   has_kids_option = ["Any", True, False]
+   has_kids_display_options = ["Any", "Yes", "No"]
+   
+   has_kids_index_selected_by_default_in_UI_component_to_render_first_time_around_as_any_filter_at_startup_and_empty_list_is_sent_to_streamlit_app=data.get('has_kids').apply(lambda x: x == True).any()
