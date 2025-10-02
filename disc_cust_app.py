@@ -57,7 +57,7 @@ st.set_page_config(layout="wide")
 @st.cache_data
 def load_data():
     """Loads all CSV files and returns them as a dictionary of dataframes."""
-    ry:
+    try:
          df_owner = pd.read_csv("owner.csv")
          df_house = pd.read_csv("house.csv")
          df_ad_ratings = pd.read_csv("ad_ratings.csv")
