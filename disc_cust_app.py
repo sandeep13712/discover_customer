@@ -57,8 +57,7 @@ st.set_page_config(layout="wide")
 @st.cache_data
 def load_data():
     """Loads all CSV files and returns them as a dictionary of dataframes."""
-    
-     try:
+    ry:
          df_owner = pd.read_csv("owner.csv")
          df_house = pd.read_csv("house.csv")
          df_ad_ratings = pd.read_csv("ad_ratings.csv")
@@ -71,7 +70,7 @@ def load_data():
              "service_visit": df_service_visit,
              "advertisement": df_advertisement,
          }
-     except FileNotFoundError:
+    except FileNotFoundError:
          st.error("Please run the data generation script first to create the CSV files.")
          return None
 
